@@ -1,0 +1,27 @@
+# Build output
+/build/
+/*.bin
+/*.elf
+/*.map
+
+# Generated files
+sdkconfig
+sdkconfig.old
+
+# ESP-IDF specific
+*.pyc
+*.pyo
+*.pyd
+__pycache__/
+*.orig
+
+# IDE/Editor
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# CMake generated
+CMakeFiles/
+CMakeCache.txt
+cmake_install.cmake

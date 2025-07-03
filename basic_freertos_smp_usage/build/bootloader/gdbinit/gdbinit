@@ -1,0 +1,2 @@
+source /Users/williamsu/Documents/ntu/code/2025-06-esp/basic_freertos_smp_usage/build/bootloader/gdbinit/symbols
+source /Users/williamsu/Documents/ntu/code/2025-06-esp/basic_freertos_smp_usage/build/bootloader/gdbinit/connect
