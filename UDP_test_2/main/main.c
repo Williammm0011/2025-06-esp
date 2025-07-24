@@ -13,18 +13,28 @@
 
 void wifi_init_sta()
 {
-    return;
+
+    // Initialize NVS (Non-Volatile Storage) - required for WiFi
+    esp_err_t ret = nvs_flash_init();
+    if (ret == ESP_ERR_NVS_NO_FREE_PAGES || ret == ESP_ERR_NVS_NEW_VERSION_FOUND)
+    {
+        ESP_ERROR_CHECK(nvs_flash_erase());
+        ret = nvs_flash_init();
+    }
+    ESP_ERROR_CHECK(ret);
+
     esp_netif_init();                    // Initialize TCP/IP network interface (mandatory)
     esp_event_loop_create_default();     // Create default event loop
     esp_netif_create_default_wifi_sta(); // Create default Wi-Fi station interface
 
     wifi_init_config_t cfg = WIFI_INIT_CONFIG_DEFAULT();
+
     esp_wifi_init(&cfg); // Initialize Wi-Fi with default config
 
     wifi_config_t wifi_config = {
         .sta = {
-            .ssid = "your_ssid",        // Replace with actual SSID
-            .password = "your_password" // Replace with actual password
+            .ssid = "hank",        // Replace with actual SSID
+            .password = "00000000" // Replace with actual password
         },
     };
 
@@ -36,8 +46,8 @@ void wifi_init_sta()
 
 void app_main(void)
 {
-
     wifi_init_sta();
+    printf("WIFI connected\n");
 
     int sock = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP); // Create IPv4 UDP socket
 
@@ -47,16 +57,26 @@ void app_main(void)
     listen_addr.sin_port = htons(12345);             // Host-to-network byte order for port
     listen_addr.sin_addr.s_addr = htonl(INADDR_ANY); // Listen on any local IP
 
-    bind(sock, (struct sockaddr *)&listen_addr, sizeof(listen_addr)); // Bind socket to port
+    // bind(sock, (struct sockaddr *)&listen_addr, sizeof(listen_addr)); // Bind socket to port
+    if (bind(sock, (struct sockaddr *)&listen_addr, sizeof(listen_addr)) < 0)
+    {
+        perror("bind failed");
+        return;
+    }
+    else
+    {
+        printf("Bind succuessfully\n");
+    }
 
     // receive UDP broadcast
     char rx_buffer[256];
     struct sockaddr_in source_addr; // Will hold sender's info
     socklen_t socklen = sizeof(source_addr);
+    printf("start waiting");
 
     int len = recvfrom(sock, rx_buffer, sizeof(rx_buffer) - 1, 0,
                        (struct sockaddr *)&source_addr, &socklen); // Blocking receive
-
+    printf("len = %d\n", len);
     if (len > 0)
     {
         rx_buffer[len] = 0; // Null-terminate string for safety

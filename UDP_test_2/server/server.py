@@ -7,8 +7,27 @@ broadcast_sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
 
 # Enable broadcast mode
 broadcast_sock.setsockopt(socket.SOL_SOCKET, socket.SO_BROADCAST, 1)
+# Bind to all interfaces to allow broadcasting
+broadcast_sock.bind(('', 0))
 
-BROADCAST_IP = "255.255.255.255"
+# Try to get the local network broadcast address, fallback to 255.255.255.255
+try:
+    # Get local IP to determine broadcast address
+    temp_sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+    temp_sock.connect(("8.8.8.8", 80))
+    # 8.8.8.8 is a public DNS server, used to determine the local IP
+    # This avoids sending packets to the internet, which is unnecessary for local broadcasts
+    local_ip = temp_sock.getsockname()[0]
+    temp_sock.close()
+
+    # For most local networks, use the local broadcast (e.g., 192.168.1.255)
+    ip_parts = local_ip.split('.')
+    BROADCAST_IP = f"{ip_parts[0]}.{ip_parts[1]}.{ip_parts[2]}.255"
+    print(f"[INFO] Using broadcast IP: {BROADCAST_IP}")
+except:
+    BROADCAST_IP = "255.255.255.255"
+    print(f"[INFO] Using fallback broadcast IP: {BROADCAST_IP}")
+
 START_PORT = 12345
 session_id = 42
 
@@ -24,6 +43,7 @@ for seq, delay in enumerate([10000, 9950, 9900]):
     broadcast_sock.sendto(data, (BROADCAST_IP, START_PORT)
                           )  # sendto: send UDP packet
     time.sleep(0.05)  # space packets by 50ms
+    print(f"[Sent] {msg} to {BROADCAST_IP}:{START_PORT}")
 
 
 # Wait for ACKs from devices
