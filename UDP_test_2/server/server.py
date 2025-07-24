@@ -1,6 +1,7 @@
 import socket
 import time
 import json
+import contextlib
 
 # socket.AF_INET = IPv4, socket.SOCK_DGRAM = UDP
 broadcast_sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
@@ -13,20 +14,20 @@ broadcast_sock.bind(('', 0))
 # Try to get the local network broadcast address, fallback to 255.255.255.255
 try:
     # Get local IP to determine broadcast address
-    temp_sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-    temp_sock.connect(("8.8.8.8", 80))
-    # 8.8.8.8 is a public DNS server, used to determine the local IP
-    # This avoids sending packets to the internet, which is unnecessary for local broadcasts
-    local_ip = temp_sock.getsockname()[0]
-    temp_sock.close()
+    with contextlib.closing(socket.socket(socket.AF_INET, socket.SOCK_DGRAM)) as temp_sock:
+        temp_sock.connect(("8.8.8.8", 80))
+        # 8.8.8.8 is a public DNS server, used to determine the local IP
+        # This avoids sending packets to the internet, which is unnecessary for local broadcasts
+        local_ip = temp_sock.getsockname()[0]
 
     # For most local networks, use the local broadcast (e.g., 192.168.1.255)
     ip_parts = local_ip.split('.')
     BROADCAST_IP = f"{ip_parts[0]}.{ip_parts[1]}.{ip_parts[2]}.255"
     print(f"[INFO] Using broadcast IP: {BROADCAST_IP}")
-except:
+except Exception as e:
     BROADCAST_IP = "255.255.255.255"
-    print(f"[INFO] Using fallback broadcast IP: {BROADCAST_IP}")
+    print(
+        f"[INFO] Using fallback broadcast IP: {BROADCAST_IP} due to error: {e}")
 
 START_PORT = 12345
 session_id = 42
@@ -89,3 +90,7 @@ if missing:
                      )  # broadcast stop command
 else:
     print("[OK] All ACKs received.")
+
+# Close sockets to release resources
+broadcast_sock.close()
+ack_sock.close()
