@@ -151,7 +151,6 @@ void show_pattern(void *arg)
 void app_main(void)
 {
     spi_init();
-
     timer_init(TIMER_GROUP_0, TIMER_0, &config);
     timer_set_counter_value(TIMER_GROUP_0, TIMER_0, 0);
     timer_set_alarm_value(TIMER_GROUP_0, TIMER_0, 1000000 / FPS); // 1 tick = 1us
